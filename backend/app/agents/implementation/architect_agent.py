@@ -1,0 +1,43 @@
+from app.agents.base.base_agent import BaseAgent
+from app.orchestration.event_bus.base import Event
+from app.orchestration.event_bus.event_types import TASK_ASSIGNED, TASK_COMPLETED
+
+
+class ArchitectureAgent(BaseAgent):
+    def __init__(self):
+        super().__init__("ARCHITECT_AGENT")
+
+    async def handle_event(self, event: Event):
+
+        if event.event_type != TASK_ASSIGNED:
+            return
+
+        assigned_agent = event.payload["assigned_agent"]
+
+        if assigned_agent != self.agent_name:
+            return
+
+        print(f"\n[{self.agent_name}] Received Task : {event.event_type}")
+
+        task_id = event.payload["task_id"]
+        task_name = event.payload["task_name"]
+        workflow_id = event.payload["workflow_id"]
+
+        print(f"\n[{self.agent_name}] : Task belongs to me")
+        print(f"Workflow ID : {workflow_id}")
+        print(f"Task ID : {task_id}")
+        print(f"Task Name : {task_name}")
+
+        print(f"\n[{self.agent_name}] Designing scalable architecture...")
+
+        completed_event = Event(
+            event_type=TASK_COMPLETED,
+            source_agent=self.agent_name,
+            correlation_id=event.correlation_id,
+            payload={
+                "workflow_id": workflow_id,
+                "task_id": task_id,
+                "status": "COMPLETED",
+            },
+        )
+        await self.publish_event(completed_event)
