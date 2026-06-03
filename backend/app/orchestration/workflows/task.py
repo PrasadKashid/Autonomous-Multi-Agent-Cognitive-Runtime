@@ -13,3 +13,4 @@ class Task:
         self.dependencies: List[str] = []
         self.priority: str = "NORMAL"
         self.created_at = datetime.utcnow()
+        self.output = None

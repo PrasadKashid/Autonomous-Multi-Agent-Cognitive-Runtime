@@ -33,52 +33,59 @@ class PMAgent(BaseAgent):
         print("Workflow Name :", created_workflow.workflow_name)
         print("Workflow Status :", created_workflow.status)
 
-        subtasks = [
-            "Design Authentication Architecture",
-            "Build JWT Service",
-            "Create Login API",
-            "Write Authentication Tests",
+        # Create Tasks
+
+        architecture_task = Task("Design Authentication Architecture")
+        architecture_task.assigned_agent = "ARCHITECT_AGENT"
+
+        jwt_task = Task("Build JWT Service")
+        jwt_task.assigned_agent = "DEVELOPER_AGENT"
+
+        login_task = Task("Create Login API")
+        login_task.assigned_agent = "DEVELOPER_AGENT"
+
+        test_task = Task("Write Authentication Tests")
+        test_task.assigned_agent = "QA_AGENT"
+
+        # Define Dependencies
+
+        jwt_task.dependencies.append(architecture_task.task_id)
+
+        login_task.dependencies.append(jwt_task.task_id)
+
+        test_task.dependencies.append(login_task.task_id)
+
+        tasks = [
+            architecture_task,
+            jwt_task,
+            login_task,
+            test_task,
         ]
 
-        # -----------------------------
-        # Phase 1 - Create all tasks
-        # -----------------------------
+        # Store Tasks
 
-        tasks_to_assign = []
-
-        for subtask in subtasks:
-
-            task = Task(subtask)
-
-            if "Design" in subtask:
-                task.assigned_agent = "ARCHITECT_AGENT"
-
-            elif "Build" in subtask or "Create" in subtask:
-                task.assigned_agent = "DEVELOPER_AGENT"
-
-            elif "Test" in subtask:
-                task.assigned_agent = "QA_AGENT"
+        for task in tasks:
 
             workflow_manager.add_task_to_workflow(
                 created_workflow.workflow_id,
                 task,
             )
 
-            tasks_to_assign.append(task)
-
             print("\nTask Created")
             print("Task ID :", task.task_id)
             print("Task Name :", task.task_name)
             print("Assigned Agent :", task.assigned_agent)
             print("Task Status :", task.status)
+            print("Dependencies :", task.dependencies)
 
-        print(f"\n[PM_Agent] Total Tasks Created : " f"{len(created_workflow.tasks)}")
+        print(f"\n[PM_Agent] Total Tasks Created : {len(tasks)}")
 
-        # -----------------------------
-        # Phase 2 - Assign all tasks
-        # -----------------------------
+        # Assign Only Tasks Without Dependencies
 
-        for task in tasks_to_assign:
+        for task in tasks:
+
+            if len(task.dependencies) > 0:
+                continue
 
             assigned_event = Event(
                 event_type=TASK_ASSIGNED,

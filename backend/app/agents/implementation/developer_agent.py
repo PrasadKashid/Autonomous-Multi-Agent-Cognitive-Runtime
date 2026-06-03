@@ -3,9 +3,10 @@ from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import TASK_ASSIGNED, TASK_COMPLETED
 
 
-class ArchitectureAgent(BaseAgent):
+class DeveloperAgent(BaseAgent):
+
     def __init__(self):
-        super().__init__("ARCHITECT_AGENT")
+        super().__init__("DEVELOPER_AGENT")
 
     async def handle_event(self, event: Event):
 
@@ -17,8 +18,7 @@ class ArchitectureAgent(BaseAgent):
         if assigned_agent != self.agent_name:
             return
 
-        print(f"\n[{self.agent_name}] Received Task : {event.event_type}")
-
+        print(f"\n[{self.agent_name}] Received Task : {event.event_type} ")
         task_id = event.payload["task_id"]
         task_name = event.payload["task_name"]
         workflow_id = event.payload["workflow_id"]
@@ -30,12 +30,20 @@ class ArchitectureAgent(BaseAgent):
         print(f"Workflow ID : {workflow_id}")
         print(f"Task ID : {task_id}")
         print(f"Task Name : {task_name}")
+        if "JWT" in task_name:
+            result = {
+                "service_name": "JWT Service",
+                "algorithm": "HS256",
+                "expiry": "15m",
+            }
 
-        result = {
-            "architecture_type": "JWT Authentication",
-            "components": ["Auth API", "JWT Service", "User Repository"],
-        }
-
+        elif "Login API" in task_name:
+            result = {
+                "endpoint": "/auth/login",
+                "method": "POST",
+            }
+        else:
+            result = {"message": "Feature Implemented"}
         completed_event = Event(
             event_type=TASK_COMPLETED,
             source_agent=self.agent_name,

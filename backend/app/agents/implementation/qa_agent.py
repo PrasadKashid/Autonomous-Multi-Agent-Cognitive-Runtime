@@ -3,9 +3,9 @@ from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import TASK_ASSIGNED, TASK_COMPLETED
 
 
-class ArchitectureAgent(BaseAgent):
+class QAAgent(BaseAgent):
     def __init__(self):
-        super().__init__("ARCHITECT_AGENT")
+        super().__init__("QA_AGENT")
 
     async def handle_event(self, event: Event):
 
@@ -32,10 +32,10 @@ class ArchitectureAgent(BaseAgent):
         print(f"Task Name : {task_name}")
 
         result = {
-            "architecture_type": "JWT Authentication",
-            "components": ["Auth API", "JWT Service", "User Repository"],
+            "test_cases": 12,
+            "coverage": "95%",
+            "status": "PASSED",
         }
-
         completed_event = Event(
             event_type=TASK_COMPLETED,
             source_agent=self.agent_name,
