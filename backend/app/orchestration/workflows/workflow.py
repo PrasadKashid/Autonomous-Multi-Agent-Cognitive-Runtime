@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 import uuid
+from app.orchestration.workflows.states import PENDING
 
 
 class WorkFlow:
@@ -8,7 +9,8 @@ class WorkFlow:
         self.workflow_id = str(uuid.uuid4())
         self.workflow_name = workflow_name
         self.correlation_id = correlation_id
-        self.status = "PENDING"
+        self.status = PENDING
         self.created_at = datetime.utcnow()
         self.tasks: List[str] = []
         self.progress = 0
+        self.context: Dict = {}

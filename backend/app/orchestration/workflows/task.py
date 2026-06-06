@@ -14,3 +14,5 @@ class Task:
         self.priority: str = "NORMAL"
         self.created_at = datetime.utcnow()
         self.output = None
+        self.retry_count = 0
+        self.max_retries = 3

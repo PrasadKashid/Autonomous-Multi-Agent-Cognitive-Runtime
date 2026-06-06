@@ -13,7 +13,10 @@ class WorkflowManager:
 
     def create_workflow(self, workflow_name: str, correlation_id: str) -> WorkFlow:
 
-        workflow = WorkFlow(workflow_name=workflow_name, correlation_id=correlation_id)
+        workflow = WorkFlow(
+            workflow_name=workflow_name,
+            correlation_id=correlation_id,
+        )
 
         self.workflows[workflow.workflow_id] = workflow
 
@@ -49,9 +52,25 @@ class WorkflowManager:
         return list(self.workflows.values())
 
     def update_task_status(self, task_id: str, status: str):
+
         task = self.get_task(task_id)
+
         if task:
             task.status = status
+
+    def update_task_output(self, task_id: str, output):
+
+        task = self.get_task(task_id)
+
+        if task:
+            task.output = output
+
+    def increment_retry_count(self, task_id):
+
+        task = self.get_task(task_id)
+
+        if task:
+            task.retry_count += 1
 
     def check_workflow_completion(self, workflow_id):
 
@@ -60,7 +79,6 @@ class WorkflowManager:
         if not workflow:
             return False
 
-        # IMPORTANT FIX
         if workflow.status == COMPLETED:
             return False
 
@@ -75,6 +93,7 @@ class WorkflowManager:
         completed = sum(task.status == COMPLETED for task in tasks)
 
         percentage = completed * 100 / total
+
         workflow.progress = percentage
 
         print(f"\nTASK COMPLETED % {percentage:.2f}")
@@ -92,26 +111,30 @@ class WorkflowManager:
         return False
 
     def get_runnable_tasks(self, workflow_id):
+
         workflow = self.get_workflow(workflow_id)
+
         if not workflow:
             return []
 
-        runnable_task = []
-        tasks = [self.get_task(task_id=task_id) for task_id in workflow.tasks]
+        runnable_tasks = []
+
+        tasks = [self.get_task(task_id) for task_id in workflow.tasks]
         tasks = [task for task in tasks if task]
 
         for task in tasks:
 
-            if task.status == COMPLETED:
+            if task.status in [COMPLETED, RUNNING]:
                 continue
 
             if len(task.dependencies) == 0:
-                runnable_task.append(task)
+                runnable_tasks.append(task)
                 continue
 
             dependencies_completed = True
 
             for dependency_id in task.dependencies:
+
                 dependency_task = self.get_task(dependency_id)
 
                 if not dependency_task:
@@ -121,29 +144,75 @@ class WorkflowManager:
                 if dependency_task.status != COMPLETED:
                     dependencies_completed = False
                     break
+
             if dependencies_completed:
-                runnable_task.append(task)
+                runnable_tasks.append(task)
 
-        return runnable_task
-
-    def update_task_output(
-        self,
-        task_id: str,
-        output,
-    ):
-        task = self.get_task(task_id)
-
-        if task:
-            task.output = output
+        return runnable_tasks
 
     def get_dependency_output(self, task: Task):
+
         outputs = {}
 
         for dependency_id in task.dependencies:
+
             dependency_task = self.get_task(dependency_id)
+
             if dependency_task:
+
                 outputs[dependency_task.task_name] = dependency_task.output
+
         return outputs
+
+    # Workflow Context Methods
+
+    def update_workflow_context(
+        self,
+        workflow_id,
+        key,
+        value,
+    ):
+        workflow = self.get_workflow(workflow_id)
+
+        if workflow:
+            workflow.context[key] = value
+
+    def get_workflow_context(self, workflow_id):
+
+        workflow = self.get_workflow(workflow_id)
+
+        if workflow:
+            return workflow.context
+
+        return {}
+
+    def build_workflow_context(self, workflow_id):
+        """
+        Collect outputs from all completed tasks.
+        Useful for passing full workflow knowledge
+        to the next agent.
+        """
+
+        workflow = self.get_workflow(workflow_id)
+
+        if not workflow:
+            return {}
+
+        context = {}
+
+        for task_id in workflow.tasks:
+
+            task = self.get_task(task_id)
+
+            if not task:
+                continue
+
+            context[task.task_name] = {
+                "status": task.status,
+                "output": task.output,
+            }
+
+        return context
 
 
 workflow_manager = WorkflowManager()

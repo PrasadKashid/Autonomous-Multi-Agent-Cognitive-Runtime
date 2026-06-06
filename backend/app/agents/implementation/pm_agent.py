@@ -87,6 +87,10 @@ class PMAgent(BaseAgent):
             if len(task.dependencies) > 0:
                 continue
 
+            workflow_context = workflow_manager.get_workflow_context(
+                created_workflow.workflow_id
+            )
+
             assigned_event = Event(
                 event_type=TASK_ASSIGNED,
                 source_agent=self.agent_name,
@@ -96,6 +100,7 @@ class PMAgent(BaseAgent):
                     "task_id": task.task_id,
                     "task_name": task.task_name,
                     "assigned_agent": task.assigned_agent,
+                    "workflow_context": workflow_context,
                 },
             )
 
