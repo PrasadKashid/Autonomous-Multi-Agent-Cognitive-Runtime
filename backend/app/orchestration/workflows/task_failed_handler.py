@@ -43,6 +43,10 @@ async def task_failed_handler(event: Event):
 
         dependency_outputs = workflow_manager.get_dependency_output(task)
 
+        workflow_context = workflow_manager.get_workflow_context(
+            workflow_id=workflow_id
+        )
+
         retry_event = Event(
             event_type=TASK_ASSIGNED,
             source_agent="WORKFLOW_MANAGER",
@@ -53,6 +57,7 @@ async def task_failed_handler(event: Event):
                 "task_name": task.task_name,
                 "assigned_agent": task.assigned_agent,
                 "dependency_outputs": dependency_outputs,
+                "workflow_context": workflow_context,
             },
         )
 

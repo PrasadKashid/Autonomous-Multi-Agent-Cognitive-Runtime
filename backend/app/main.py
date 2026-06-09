@@ -5,7 +5,7 @@ from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import TASK_CREATED
 import app.orchestration.event_bus.subscribers
 
-import app.agents.registry.agent_registry
+import app.agents.registry.agent_bootstrap
 
 app = FastAPI()
 

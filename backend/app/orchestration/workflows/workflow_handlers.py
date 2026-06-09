@@ -38,9 +38,21 @@ async def task_completed_handler(event: Event):
         )
 
     task = workflow_manager.get_task(completed_task_id)
-    workflow_manager.update_workflow_context(
-        workflow_id=workflow_id, key=task.task_name, value=output
-    )
+
+    # Update workflow context
+
+    if output:
+        workflow_manager.update_workflow_context(
+            workflow_id=workflow_id,
+            key=task.task_name,
+            value={
+                "status": status,
+                "output": output,
+            },
+        )
+
+    print("\n===== WORKFLOW CONTEXT =====")
+    print(workflow_manager.get_workflow_context(workflow_id))
 
     print("\n=== TASK COMPLETED ===")
     print("Workflow ID :", workflow_id)
@@ -93,10 +105,11 @@ async def task_completed_handler(event: Event):
             task_id=runnable_task.task_id,
             status=RUNNING,
         )
+
         dependency_output = workflow_manager.get_dependency_output(runnable_task)
-        workflow_context = workflow_manager.get_workflow_context(
-            workflow_id=workflow_id
-        )
+
+        workflow_context = workflow_manager.get_workflow_context(workflow_id)
+
         assigned_event = Event(
             event_type=TASK_ASSIGNED,
             source_agent="WORKFLOW_MANAGER",
@@ -115,6 +128,7 @@ async def task_completed_handler(event: Event):
 
 
 async def workflow_failed_handler(event: Event):
+
     if event.event_type != WORKFLOW_FAILED:
         return
 
@@ -124,7 +138,10 @@ async def workflow_failed_handler(event: Event):
 
     if not workflow:
         return
+
     workflow.status = FAILED
-    print("\nWORKFLOW FAILED")
+
+    print("\n===== WORKFLOW FAILED =====")
     print("Workflow ID :", workflow.workflow_id)
-    print("Failed Task : ", event.payload["task_name"])
+    print("Workflow Name :", workflow.workflow_name)
+    print("Failed Task :", event.payload["task_name"])

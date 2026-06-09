@@ -1,22 +1,22 @@
-from app.agents.implementation.pm_agent import PMAgent
-from app.agents.implementation.architect_agent import ArchitectureAgent
-from app.agents.implementation.developer_agent import DeveloperAgent
-from app.agents.implementation.qa_agent import QAAgent
-from app.orchestration.event_bus.bus import event_bus
-from app.orchestration.event_bus.event_types import *
-from app.orchestration.workflows.workflow_handlers import task_completed_handler
+class AgentRegistry:
 
-from app.orchestration.workflows.task_failed_handler import task_failed_handler
+    def __init__(self):
+        self.agents = {}
 
-pm_agent = PMAgent()
-architecture_agent = ArchitectureAgent()
-developer_agent = DeveloperAgent()
-qa_agent = QAAgent()
+    def register_agent(self, agent_name, capabilities):
+        self.agents[agent_name] = capabilities
 
-event_bus.subscribe(TASK_CREATED, pm_agent.handle_event)
-event_bus.subscribe(TASK_ASSIGNED, architecture_agent.handle_event)
-event_bus.subscribe(TASK_ASSIGNED, developer_agent.handle_event)
-event_bus.subscribe(TASK_ASSIGNED, qa_agent.handle_event)
+    def find_agent(self, capability):
 
-event_bus.subscribe(TASK_COMPLETED, task_completed_handler)
-event_bus.subscribe(TASK_FAILED, task_failed_handler)
+        for agent_name, capabilities in self.agents.items():
+
+            if capability in capabilities:
+                return agent_name
+
+        return None
+
+    def get_all_agents(self):
+        return self.agents
+
+
+agent_registry = AgentRegistry()
