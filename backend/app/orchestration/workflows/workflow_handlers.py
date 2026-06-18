@@ -9,6 +9,7 @@ from app.orchestration.workflows.workflow_manager import workflow_manager
 from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.bus import event_bus
 from app.orchestration.workflows.states import RUNNING, FAILED
+from app.db.repositories.workflow_context_repository import workflow_context_repository
 
 
 async def task_completed_handler(event: Event):
@@ -50,6 +51,9 @@ async def task_completed_handler(event: Event):
                 "output": output,
             },
         )
+    workflow_context_repository.save(
+        workflow_id=workflow_id, task_name=task.task_name, status=status, output=output
+    )
 
     print("\n===== WORKFLOW CONTEXT =====")
     print(workflow_manager.get_workflow_context(workflow_id))

@@ -5,7 +5,7 @@ from app.orchestration.workflows.states import PENDING
 
 
 class Task:
-    def __init__(self, task_name):
+    def __init__(self, task_name: str, capability: str = None):
         self.task_id: str = str(uuid.uuid4())
         self.task_name: str = task_name
         self.assigned_agent: Optional[str] = None
@@ -16,3 +16,4 @@ class Task:
         self.output = None
         self.retry_count = 0
         self.max_retries = 3
+        self.capability = capability

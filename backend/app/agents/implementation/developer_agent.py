@@ -7,11 +7,13 @@ from app.orchestration.event_bus.event_types import (
 )
 from app.orchestration.workflows.workflow_manager import workflow_manager
 from app.memory.memory_manager import memory_manager
+from app.capabilities.backend import BackendCapability
 
 
 class DeveloperAgent(BaseAgent):
 
     def __init__(self):
+        self.capability = BackendCapability()
         super().__init__("DEVELOPER_AGENT")
 
     async def handle_event(self, event: Event):
@@ -58,61 +60,35 @@ class DeveloperAgent(BaseAgent):
             return
 
         memory = memory_manager.get_memory(self.agent_name)
-        # JWT SERVICE TASK
-        # Fail first 2 times, succeed on 3rd attempt
 
-        if "JWT" in task_name:
+        # Retry simulation for JWT task
 
-            if task.retry_count < 2:
+        if "JWT" in task_name and task.retry_count < 2:
 
-                print(f"\n[{self.agent_name}] Simulating JWT Service Failure...")
+            print(f"\n[{self.agent_name}] Simulating JWT Service Failure...")
 
-                failed_event = Event(
-                    event_type=TASK_FAILED,
-                    source_agent=self.agent_name,
-                    correlation_id=event.correlation_id,
-                    payload={
-                        "workflow_id": workflow_id,
-                        "task_id": task_id,
-                    },
-                )
+            failed_event = Event(
+                event_type=TASK_FAILED,
+                source_agent=self.agent_name,
+                correlation_id=event.correlation_id,
+                payload={
+                    "workflow_id": workflow_id,
+                    "task_id": task_id,
+                },
+            )
 
-                await self.publish_event(failed_event)
-                return
+            await self.publish_event(failed_event)
+            return
 
-            print(f"\n[{self.agent_name}] Building JWT Service...")
+        print(f"\n[{self.agent_name}] Executing Backend Capability...")
 
-            result = {
-                "service_name": "JWT Service",
-                "algorithm": "HS256",
-                "expiry": "15m",
-            }
+        result = self.capability.execute(
+            task_name,
+            dependency_outputs,
+            workflow_context,
+        )
 
-            memory.store(task_name, result)
-
-        # LOGIN API TASK
-
-        elif "Login API" in task_name:
-
-            print(f"\n[{self.agent_name}] Creating Login API...")
-
-            result = {
-                "endpoint": "/auth/login",
-                "method": "POST",
-            }
-
-            memory.store(task_name, result)
-
-        # DEFAULT TASK
-
-        else:
-
-            print(f"\n[{self.agent_name}] Developing Feature...")
-
-            result = {
-                "message": "Feature Implemented",
-            }
-            memory.store(task_name, result)
+        memory.store(task_name, result)
 
         completed_event = Event(
             event_type=TASK_COMPLETED,

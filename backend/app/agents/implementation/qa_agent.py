@@ -3,10 +3,12 @@ from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import TASK_ASSIGNED, TASK_COMPLETED
 
 from app.memory.memory_manager import memory_manager
+from app.capabilities.testing import TestingCapability
 
 
 class QAAgent(BaseAgent):
     def __init__(self):
+        self.capability = TestingCapability()
         super().__init__("QA_AGENT")
 
     async def handle_event(self, event: Event):
@@ -25,6 +27,7 @@ class QAAgent(BaseAgent):
         task_name = event.payload["task_name"]
         workflow_id = event.payload["workflow_id"]
         dependency_outputs = event.payload.get("dependency_outputs", {})
+        workflow_context = event.payload.get("workflow_context", {})
         memory = memory_manager.get_memory(self.agent_name)
 
         print("\nDependency Ouput")
@@ -34,11 +37,9 @@ class QAAgent(BaseAgent):
         print(f"Task ID : {task_id}")
         print(f"Task Name : {task_name}")
 
-        result = {
-            "test_cases": 12,
-            "coverage": "95%",
-            "status": "PASSED",
-        }
+        result = self.capability.execute(
+            task_name, dependency_outputs, workflow_context
+        )
         memory.store(task_name, result)
         completed_event = Event(
             event_type=TASK_COMPLETED,
