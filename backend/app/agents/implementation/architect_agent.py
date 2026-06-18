@@ -3,10 +3,12 @@ from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import TASK_ASSIGNED, TASK_COMPLETED
 
 from app.memory.memory_manager import memory_manager
+from app.capabilities.architecture import ArchitectureCapability
 
 
 class ArchitectureAgent(BaseAgent):
     def __init__(self):
+        self.capability = ArchitectureCapability()
         super().__init__("ARCHITECT_AGENT")
 
     async def handle_event(self, event: Event):
@@ -25,6 +27,7 @@ class ArchitectureAgent(BaseAgent):
         task_name = event.payload["task_name"]
         workflow_id = event.payload["workflow_id"]
         dependency_outputs = event.payload.get("dependency_outputs", {})
+        workflow_context = event.payload.get("workflow_context", {})
         memory = memory_manager.get_memory(agent_name=self.agent_name)
 
         print("\nDependency Ouput")
@@ -34,10 +37,11 @@ class ArchitectureAgent(BaseAgent):
         print(f"Task ID : {task_id}")
         print(f"Task Name : {task_name}")
 
-        result = {
-            "architecture_type": "JWT Authentication",
-            "components": ["Auth API", "JWT Service", "User Repository"],
-        }
+        result = self.capability.execute(
+            task_name,
+            dependency_outputs,
+            workflow_context,
+        )
 
         memory.store(task_name, result)
 

@@ -13,4 +13,4 @@ class WorkFlow:
         self.created_at = datetime.utcnow()
         self.tasks: List[str] = []
         self.progress = 0
-        self.context: Dict = {}
+        # self.context: Dict = {}

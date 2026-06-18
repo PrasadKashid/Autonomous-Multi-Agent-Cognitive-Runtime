@@ -9,6 +9,9 @@ from app.orchestration.event_bus.event_types import (
 from app.orchestration.workflows.workflow_manager import workflow_manager
 from app.orchestration.workflows.task import Task
 
+from app.agents.registry.agent_registry import agent_registry
+from app.orchestration.planner.task_planner import task_planner
+
 
 class PMAgent(BaseAgent):
 
@@ -33,35 +36,32 @@ class PMAgent(BaseAgent):
         print("Workflow Name :", created_workflow.workflow_name)
         print("Workflow Status :", created_workflow.status)
 
-        # Create Tasks
+        planned_tasks = task_planner.create_plan(event.payload["task"])
+        task_mapping = {}
 
-        architecture_task = Task("Design Authentication Architecture")
-        architecture_task.assigned_agent = "ARCHITECT_AGENT"
+        for planned_task in planned_tasks:
 
-        jwt_task = Task("Build JWT Service")
-        jwt_task.assigned_agent = "DEVELOPER_AGENT"
+            task = Task(
+                planned_task.task_name,
+                capability=planned_task.capability,
+            )
 
-        login_task = Task("Create Login API")
-        login_task.assigned_agent = "DEVELOPER_AGENT"
+            task.assigned_agent = agent_registry.find_agent(planned_task.capability)
 
-        test_task = Task("Write Authentication Tests")
-        test_task.assigned_agent = "QA_AGENT"
+            task_mapping[planned_task.task_name] = task
+
+        for planned_task in planned_tasks:
+
+            current_task = task_mapping[planned_task.task_name]
+
+            for dependency_name in planned_task.dependencies:
+
+                dependency_task = task_mapping[dependency_name]
+
+                current_task.dependencies.append(dependency_task.task_id)
 
         # Define Dependencies
-
-        jwt_task.dependencies.append(architecture_task.task_id)
-
-        login_task.dependencies.append(jwt_task.task_id)
-
-        test_task.dependencies.append(login_task.task_id)
-
-        tasks = [
-            architecture_task,
-            jwt_task,
-            login_task,
-            test_task,
-        ]
-
+        tasks = list(task_mapping.values())
         # Store Tasks
 
         for task in tasks:
