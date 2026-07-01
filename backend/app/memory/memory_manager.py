@@ -7,8 +7,9 @@ class MemoryManager:
         self.agent_memories = {}
 
     def get_memory(self, agent_name):
+
         if agent_name not in self.agent_memories:
-            self.agent_memories[agent_name] = AgentMemory(agent_name=agent_name)
+            self.agent_memories[agent_name] = AgentMemory(agent_name)
 
         return self.agent_memories[agent_name]
 

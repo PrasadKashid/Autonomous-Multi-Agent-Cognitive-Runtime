@@ -11,7 +11,7 @@ class WorkflowEventModel(Base):
 
     workflow_id = Column(String, nullable=False)
     task_id = Column(String, nullable=True)
-
+    task_name = Column(String, nullable = True)
     event_type = Column(String, nullable=False)
 
     agent = Column(String, nullable=True)

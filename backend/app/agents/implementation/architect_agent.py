@@ -2,7 +2,6 @@ from app.agents.base.base_agent import BaseAgent
 from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import TASK_ASSIGNED, TASK_COMPLETED
 
-from app.memory.memory_manager import memory_manager
 from app.capabilities.architecture import ArchitectureCapability
 
 
@@ -28,8 +27,6 @@ class ArchitectureAgent(BaseAgent):
         workflow_id = event.payload["workflow_id"]
         dependency_outputs = event.payload.get("dependency_outputs", {})
         workflow_context = event.payload.get("workflow_context", {})
-        memory = memory_manager.get_memory(agent_name=self.agent_name)
-
         print("\nDependency Ouput")
         print(dependency_outputs)
         print(f"\n[{self.agent_name}] : Task belongs to me")
@@ -43,7 +40,11 @@ class ArchitectureAgent(BaseAgent):
             workflow_context,
         )
 
-        memory.store(task_name, result)
+        self.store_memory(
+            workflow_id=workflow_id,
+            task_name=task_name,
+            memory_data=result,
+        )
 
         completed_event = Event(
             event_type=TASK_COMPLETED,
@@ -54,9 +55,10 @@ class ArchitectureAgent(BaseAgent):
                 "task_id": task_id,
                 "status": "COMPLETED",
                 "result": result,
+                "task_name": task_name,
             },
         )
 
         print("\nArchitect Agent Memory")
-        print(memory.get_all())
+        print(self.get_recent_memory())
         await self.publish_event(completed_event)

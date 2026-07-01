@@ -10,6 +10,7 @@ from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import TASK_ASSIGNED
 from app.orchestration.event_bus.bus import event_bus
 import os
+from app.db.repositories.workflow_context_repository import workflow_context_repository
 
 
 class WorkflowManager:
@@ -242,16 +243,12 @@ class WorkflowManager:
         key,
         value,
     ):
-
-        workflow = self.get_workflow(workflow_id)
-
-        if not workflow:
-            return
-
-        # if not hasattr(workflow, "context"):
-        #     workflow.context = {}
-
-        workflow.context[key] = value
+        workflow_context_repository.save_or_update(
+            workflow_id=workflow_id,
+            task_name=key,
+            status=value["status"],
+            output=value["output"],
+        )
 
     def get_workflow_context(
         self,
@@ -316,23 +313,6 @@ class WorkflowManager:
             runtime_workflow.status = db_workflow.status
             runtime_workflow.progress = db_workflow.progress
             runtime_workflow.tasks = []
-
-            # Restore workflow context
-            if hasattr(db_workflow, "context") and db_workflow.context:
-
-                if isinstance(db_workflow.context, str):
-
-                    try:
-                        runtime_workflow.context = json.loads(db_workflow.context)
-
-                    except Exception:
-                        runtime_workflow.context = {}
-
-                else:
-                    runtime_workflow.context = db_workflow.context
-
-            else:
-                runtime_workflow.context = {}
 
             self.workflows[runtime_workflow.workflow_id] = runtime_workflow
 
@@ -479,7 +459,7 @@ class WorkflowManager:
 
                 event = Event(
                     event_type=TASK_ASSIGNED,
-                    source_agent="SYSTEM",
+                    source_agent="WORKFLOW_MANAGER",
                     correlation_id=workflow.correlation_id,
                     payload={
                         "workflow_id": workflow.workflow_id,

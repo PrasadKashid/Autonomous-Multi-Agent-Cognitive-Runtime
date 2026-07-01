@@ -80,6 +80,20 @@ class PMAgent(BaseAgent):
 
         print(f"\n[PM_Agent] Total Tasks Created : {len(tasks)}")
 
+        self.store_memory(
+            workflow_id=created_workflow.workflow_id,
+            task_name="Workflow Planning",
+            memory_data=[
+                {
+                    "task": t.task_name,
+                    "agent": t.assigned_agent,
+                    "dependencies": t.dependencies,
+                }
+                for t in tasks
+            ],
+        )
+        print("\nPM Memory")
+        print(self.get_recent_memory())
         # Assign Only Tasks Without Dependencies
 
         for task in tasks:

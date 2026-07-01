@@ -8,6 +8,7 @@ from app.api.schemas.workflow_schema import CreateWorkflowRequest
 from app.db.repositories.workflow_repository import workflow_repository
 from app.db.repositories.workflow_context_repository import workflow_context_repository
 from app.db.repositories.task_repository import task_repository
+from app.db.repositories.workflow_event_repository import workflow_event_repository
 from uuid import uuid4
 
 # from app.
@@ -46,5 +47,10 @@ def get_task(workflow_id: str):
 
 
 @router.get("/{workflow_id}/context")
-def fet_context(workflow_id: str):
+def get_context(workflow_id: str):
     return workflow_context_repository.get_workflow_context(workflow_id=workflow_id)
+
+
+@router.get("/{workflow_id}/events")
+def get_events(workflow_id: str):
+    return workflow_event_repository.get_by_workflow(workflow_id=workflow_id)

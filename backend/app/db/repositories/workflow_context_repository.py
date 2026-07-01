@@ -6,19 +6,40 @@ import json
 
 
 class WorkflowContextRepository:
-    def save(self, workflow_id, task_name, status, output):
+    def save_or_update(
+        self,
+        workflow_id,
+        task_name,
+        status,
+        output,
+    ):
         db: Session = SessionLocal()
 
         try:
-            context = WorkflowContextModel(
-                workflow_id=workflow_id,
-                task_name=task_name,
-                status=status,
-                output=json.dumps(output),
+
+            context = (
+                db.query(WorkflowContextModel)
+                .filter(
+                    WorkflowContextModel.workflow_id == workflow_id,
+                    WorkflowContextModel.task_name == task_name,
+                )
+                .first()
             )
 
-            db.add(context)
+            if context:
+                context.status = status
+                context.output = json.dumps(output) if output else None
+            else:
+                context = WorkflowContextModel(
+                    workflow_id=workflow_id,
+                    task_name=task_name,
+                    status=status,
+                    output=json.dumps(output) if output else None,
+                )
+                db.add(context)
+
             db.commit()
+
         finally:
             db.close()
 
@@ -35,6 +56,5 @@ class WorkflowContextRepository:
             return workflow_context
         finally:
             db.close()
-
 
 workflow_context_repository = WorkflowContextRepository()

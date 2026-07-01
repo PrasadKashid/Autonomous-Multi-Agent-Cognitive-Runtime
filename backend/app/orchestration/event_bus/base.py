@@ -19,3 +19,5 @@ class Event(BaseModel):
     correlation_id: str
 
     payload: Dict[str, Any]
+
+    message: Optional[str] = None

@@ -42,17 +42,13 @@ async def task_completed_handler(event: Event):
 
     # Update workflow context
 
-    if output:
-        workflow_manager.update_workflow_context(
-            workflow_id=workflow_id,
-            key=task.task_name,
-            value={
-                "status": status,
-                "output": output,
-            },
-        )
-    workflow_context_repository.save(
-        workflow_id=workflow_id, task_name=task.task_name, status=status, output=output
+    workflow_manager.update_workflow_context(
+        workflow_id=workflow_id,
+        key=task.task_name,
+        value={
+            "status": status,
+            "output": output,
+        },
     )
 
     print("\n===== WORKFLOW CONTEXT =====")
@@ -112,11 +108,6 @@ async def task_completed_handler(event: Event):
 
         dependency_output = workflow_manager.get_dependency_output(runnable_task)
         workflow = workflow_manager.get_workflow(workflow_id)
-
-        print("\n===== BEFORE RETRY =====")
-        print("Workflow object id:", id(workflow))
-        print("Workflow tasks:", workflow.tasks)
-        print("Workflow context:", workflow.context)
 
         workflow_context = workflow_manager.get_workflow_context(workflow_id)
 

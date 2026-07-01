@@ -6,7 +6,6 @@ from app.orchestration.event_bus.event_types import (
     TASK_FAILED,
 )
 from app.orchestration.workflows.workflow_manager import workflow_manager
-from app.memory.memory_manager import memory_manager
 from app.capabilities.backend import BackendCapability
 import os
 
@@ -60,8 +59,6 @@ class DeveloperAgent(BaseAgent):
             print(f"[{self.agent_name}] Task not found")
             return
 
-        memory = memory_manager.get_memory(self.agent_name)
-
         # Retry simulation for JWT task
 
         if "JWT" in task_name and task.retry_count < 2:
@@ -75,6 +72,7 @@ class DeveloperAgent(BaseAgent):
                 payload={
                     "workflow_id": workflow_id,
                     "task_id": task_id,
+                    "task_name": task_name,
                 },
             )
 
@@ -89,7 +87,9 @@ class DeveloperAgent(BaseAgent):
             workflow_context,
         )
 
-        memory.store(task_name, result)
+        self.store_memory(
+            workflow_id=workflow_id, task_name=task_name, memory_data=result
+        )
 
         completed_event = Event(
             event_type=TASK_COMPLETED,
@@ -100,11 +100,12 @@ class DeveloperAgent(BaseAgent):
                 "task_id": task_id,
                 "status": "COMPLETED",
                 "result": result,
+                "task_name": task_name,
             },
         )
 
         print("\nAgent Memory")
-        print(memory.get_all())
+        print(self.get_recent_memory())
 
         await self.publish_event(completed_event)
         # if task_name == "Build JWT Service":

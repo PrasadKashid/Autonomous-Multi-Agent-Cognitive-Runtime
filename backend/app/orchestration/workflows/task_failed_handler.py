@@ -43,10 +43,8 @@ async def task_failed_handler(event: Event):
 
         dependency_outputs = workflow_manager.get_dependency_output(task)
         workflow = workflow_manager.get_workflow(workflow_id)
-
-        print("\n===== WORKFLOW OBJECT =====")
-        print(workflow)
-        print(workflow.context if workflow else "NO WORKFLOW")
+        workflow_context = workflow_manager.get_workflow_context(workflow_id)
+        print("Workflow Context", workflow_context)
         workflow_context = workflow_manager.get_workflow_context(
             workflow_id=workflow_id
         )
