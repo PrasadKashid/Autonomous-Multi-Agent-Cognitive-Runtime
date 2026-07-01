@@ -39,6 +39,11 @@ class ArchitectureAgent(BaseAgent):
             dependency_outputs,
             workflow_context,
         )
+        result = self.capability.execute(
+            task_name,
+            dependency_outputs,
+            workflow_context,
+        )
 
         self.store_memory(
             workflow_id=workflow_id,

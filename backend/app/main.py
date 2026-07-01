@@ -29,3 +29,8 @@ async def startup_event():
 @app.get("/")
 async def root():
     return {"message": "AI Autonomous Runtime Online"}
+
+
+@router.post("/workflow/start")
+async def start_workflow():
+    pass
