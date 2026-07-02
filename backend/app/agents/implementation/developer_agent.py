@@ -106,7 +106,12 @@ class DeveloperAgent(BaseAgent):
 
         print("\nAgent Memory")
         print(self.get_recent_memory())
+        retrieved_memories = self.search_memory(task_name)
 
+        print("\nRetrieved Memories")
+
+        for memory in retrieved_memories:
+            print(memory)
         await self.publish_event(completed_event)
         # if task_name == "Build JWT Service":
         #     print("\n===== SIMULATING CRASH =====")

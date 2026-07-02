@@ -36,3 +36,15 @@ class BaseAgent(ABC):
     def get_recent_memory(self, limit: int = 10):
         memory = memory_manager.get_memory(self.agent_name)
         return memory.get_recent(limit)
+
+    def search_memory(
+        self,
+        query,
+        top_k=5,
+    ):
+        memory = memory_manager.get_memory(self.agent_name)
+
+        return memory.search(
+            query=query,
+            top_k=top_k,
+        )

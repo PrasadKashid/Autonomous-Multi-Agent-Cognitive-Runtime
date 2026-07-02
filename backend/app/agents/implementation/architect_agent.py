@@ -50,7 +50,6 @@ class ArchitectureAgent(BaseAgent):
             task_name=task_name,
             memory_data=result,
         )
-
         completed_event = Event(
             event_type=TASK_COMPLETED,
             source_agent=self.agent_name,
@@ -66,4 +65,10 @@ class ArchitectureAgent(BaseAgent):
 
         print("\nArchitect Agent Memory")
         print(self.get_recent_memory())
+        retrieved_memories = self.search_memory(task_name)
+
+        print("\nRetrieved Memories")
+
+        for memory in retrieved_memories:
+            print(memory)
         await self.publish_event(completed_event)

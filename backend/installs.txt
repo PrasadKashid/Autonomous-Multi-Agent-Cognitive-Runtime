@@ -11,3 +11,8 @@ fastapi uvicorn websockets redis sqlalchemy asyncpg pydantic python-dotenv struc
 | pydantic      | schema validation       |
 | python-dotenv | env management          |
 | structlog     | structured logging      |
+| Chromadb      | Embedding               |
+| sentence-         \
+|    transformer |       |
+| structlog     | structured logging      |
+| structlog     | structured logging      |
