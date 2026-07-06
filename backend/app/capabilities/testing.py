@@ -1,14 +1,15 @@
-class TestingCapability:
+from app.capabilities.base_capability import BaseCapability
 
-    def execute(
-        self,
-        task_name,
-        dependency_outputs,
-        workflow_context,
-    ):
 
-        return {
-            "test_cases": 12,
-            "coverage": "95%",
-            "status": "PASSED",
-        }
+class TestingCapability(BaseCapability):
+
+    def __init__(self):
+        super().__init__("QA_AGENT")
+
+    def execute(self, task_name, depedency_output, workflow_context, memories):
+        return self.ask_llm(
+            task=task_name,
+            dependencies=depedency_output,
+            workflow_context=workflow_context,
+            memories=memories,
+        )

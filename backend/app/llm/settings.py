@@ -1,0 +1,7 @@
+LLM_PROVIDER = "ollama"
+
+OLLAMA_MODEL = "llama3.2:3b"
+
+TEMPERATURE = 0.2
+
+MAX_TOKENS = 2048

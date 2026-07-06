@@ -1,17 +1,21 @@
-class ArchitectureCapability:
+from app.capabilities.base_capability import BaseCapability
+
+class ArchitectureCapability(BaseCapability):
+
+    def __init__(self):
+        super().__init__("ARCHITECT_AGENT")
 
     def execute(
         self,
         task_name,
         dependency_outputs,
         workflow_context,
+        memories,
     ):
 
-        return {
-            "architecture_type": "JWT Authentication",
-            "components": [
-                "Auth API",
-                "JWT Service",
-                "User Repository",
-            ],
-        }
+        return self.ask_llm(
+            task=task_name,
+            dependencies=dependency_outputs,
+            workflow_context=workflow_context,
+            memories=memories,
+        )

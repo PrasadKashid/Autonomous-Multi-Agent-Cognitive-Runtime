@@ -1,25 +1,21 @@
-class BackendCapability:
+from app.capabilities.base_capability import BaseCapability
+
+class BackendCapability(BaseCapability):
+
+    def __init__(self):
+        super().__init__("DEVELOPER_PROMPT")
 
     def execute(
         self,
         task_name,
         dependency_outputs,
         workflow_context,
+        memories,
     ):
 
-        if "JWT" in task_name:
-
-            return {
-                "service_name": "JWT Service",
-                "algorithm": "HS256",
-                "expiry": "15m",
-            }
-
-        if "Login API" in task_name:
-
-            return {
-                "endpoint": "/auth/login",
-                "method": "POST",
-            }
-
-        return {"message": "Backend Feature Implemented"}
+        return self.ask_llm(
+            task=task_name,
+            dependencies=dependency_outputs,
+            workflow_context=workflow_context,
+            memories=memories,
+        )
