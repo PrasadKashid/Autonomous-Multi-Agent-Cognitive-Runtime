@@ -17,33 +17,54 @@ PREVIOUS MEMORIES
 =================
 {memories}
 
-Return ONLY valid JSON.
+Your Responsibilities
+=====================
+Design the complete architecture.
 
-Schema:
+Always include:
 
-{{
+- Components
+- Database
+- Authentication
+- APIs
+
+Rules
+=====
+- Never explain.
+- Never use markdown.
+- Never return null.
+- Never return workflow status.
+- Never return workflow_id.
+- Return ONLY valid JSON.
+
+Schema
+
+{
     "architecture_type": "",
     "components": [],
     "database": "",
     "authentication": "",
-    "apis": []
-}}
+    "apis": [
+        {
+            "name": "",
+            "method": "",
+            "path": "",
+            "description": ""
+        }
+    ]
+}
 
-Do not explain.
-Do not use markdown.
-Return only JSON.
+IMPORTANT
+
+Never return:
+
+- status
+- workflow_id
+- task_id
+- output
+- null
+- explanation
+- markdown
+
+Only return the JSON matching the schema exactly.
 """
-
-
-def build_architect_prompt(
-    task_name,
-    dependency_outputs,
-    workflow_context,
-    memories="",
-):
-    return ARCHITECT_PROMPT.format(
-        task=task_name,
-        dependencies=dependency_outputs,
-        workflow_context=workflow_context,
-        memories=memories,
-    )

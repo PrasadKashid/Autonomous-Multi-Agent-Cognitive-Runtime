@@ -2,8 +2,8 @@ import json
 
 from app.prompting.architect_prompt import ARCHITECT_PROMPT
 from app.prompting.developer_prompt import DEVELOPER_PROMPT
-from app.prompting.qa_prompt import QA_PROMPT
 from app.prompting.pm_prompt import PM_PROMPT
+from app.prompting.qa_prompt import QA_PROMPT
 
 
 class PromptBuilder:
@@ -12,7 +12,7 @@ class PromptBuilder:
         "ARCHITECT_AGENT": ARCHITECT_PROMPT,
         "DEVELOPER_AGENT": DEVELOPER_PROMPT,
         "QA_AGENT": QA_PROMPT,
-        "PM_Agent": PM_PROMPT,
+        "PM_AGENT": PM_PROMPT,
     }
 
     def build(

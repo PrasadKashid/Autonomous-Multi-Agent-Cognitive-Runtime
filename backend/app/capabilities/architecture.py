@@ -15,7 +15,7 @@ class ArchitectureCapability(BaseCapability):
 
         return self.ask_llm(
             task=task_name,
-            dependencies=dependency_outputs,
+            dependency_outputs=dependency_outputs,
             workflow_context=workflow_context,
             memories=memories,
         )

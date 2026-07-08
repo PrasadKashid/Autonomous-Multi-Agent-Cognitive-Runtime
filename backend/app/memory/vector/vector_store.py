@@ -75,9 +75,9 @@ class VectorStore:
             memories.append(
                 {
                     "document": doc,
-                    "workflow": metadata["workflow_id"],
-                    "task": metadata["task_name"],
-                    "created_at": metadata["created_at"],
+                    "workflow": metadata.get("workflow_id"),
+                    "task": metadata.get("task_name"),
+                    "created_at": metadata.get("created_at"),
                     "distance": round(distance, 4),
                 }
             )

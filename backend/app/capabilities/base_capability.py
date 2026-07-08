@@ -12,7 +12,7 @@ class BaseCapability:
     def ask_llm(
         self,
         task,
-        dependencies,
+        dependency_outputs,
         workflow_context,
         memories,
     ):
@@ -20,11 +20,17 @@ class BaseCapability:
         prompt = prompt_builder.build(
             agent_name=self.agent_name,
             task=task,
-            dependencies=dependencies,
+            dependencies=dependency_outputs,
             workflow_context=workflow_context,
             memories=memories,
         )
 
+        print(f"\n===== GENERATED PROMPT ===== {self.agent_name}")
+        print(prompt)
+
         response = self.llm.generate(prompt)
+
+        print(f"\n===== LLM RESPONSE ===== {self.agent_name}")
+        print(response)
 
         return response_parser.parse(response)

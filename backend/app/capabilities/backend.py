@@ -1,9 +1,10 @@
 from app.capabilities.base_capability import BaseCapability
 
+
 class BackendCapability(BaseCapability):
 
     def __init__(self):
-        super().__init__("DEVELOPER_PROMPT")
+        super().__init__("DEVELOPER_AGENT")
 
     def execute(
         self,
@@ -15,7 +16,7 @@ class BackendCapability(BaseCapability):
 
         return self.ask_llm(
             task=task_name,
-            dependencies=dependency_outputs,
+            dependency_outputs=dependency_outputs,
             workflow_context=workflow_context,
             memories=memories,
         )

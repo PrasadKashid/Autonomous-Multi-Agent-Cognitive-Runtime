@@ -1,5 +1,6 @@
 # Autonomous-Multi-Agent-Cognitive-Runtime
 
+```
 Architecture:
                                 ┌────────────────────────┐
                                 │        Frontend        │
@@ -87,3 +88,4 @@ Architecture:
                     │ Distributed Tracing                │
                     │ Agent Reasoning Visualization      │
                     └────────────────────────────────────┘
+```
