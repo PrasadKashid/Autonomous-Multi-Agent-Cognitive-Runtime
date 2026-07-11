@@ -39,24 +39,8 @@ class QAAgent(BaseAgent):
             {},
         )
 
-        print("\nDependency Output")
-        print(dependency_outputs)
-
-        print("\nWorkflow Context")
-        print(workflow_context)
-
-        print(f"\n[{self.agent_name}] Task belongs to me")
-        print(f"Workflow ID : {workflow_id}")
-        print(f"Task ID : {task_id}")
-        print(f"Task Name : {task_name}")
-
         # Retrieve relevant memories
         retrieved_memories = self.search_memory(task_name)
-
-        print("\n===== Retrieved Memories =====")
-
-        for memory in retrieved_memories:
-            print(memory)
 
         # Execute capability (later this will call an LLM)
         result = self.capability.execute(
@@ -72,10 +56,6 @@ class QAAgent(BaseAgent):
             task_name=task_name,
             memory_data=result,
         )
-
-        print("\nQA Agent Memory")
-        print(self.get_recent_memory())
-
         completed_event = Event(
             event_type=TASK_COMPLETED,
             source_agent=self.agent_name,

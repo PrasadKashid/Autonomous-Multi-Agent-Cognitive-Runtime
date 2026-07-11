@@ -1,10 +1,7 @@
 from app.agents.base.base_agent import BaseAgent
 from app.orchestration.event_bus.base import Event
-from app.orchestration.event_bus.event_types import (
-    TASK_ASSIGNED,
-    TASK_COMPLETED,
-    TASK_FAILED,
-)
+from app.orchestration.event_bus.event_types import TASK_ASSIGNED, TASK_COMPLETED
+from app.orchestration.workflows.states import COMPLETED
 from app.orchestration.workflows.workflow_manager import workflow_manager
 from app.capabilities.backend import BackendCapability
 from app.prompting.prompt_builder import prompt_builder
@@ -40,53 +37,15 @@ class DeveloperAgent(BaseAgent):
             {},
         )
 
-        print("\nDependency Output")
-        print(dependency_outputs)
-
-        print("\nWorkflow Context")
-        print(workflow_context)
-
         print(f"\n[{self.agent_name}] Task belongs to me")
-        print(f"Workflow ID : {workflow_id}")
-        print(f"Task ID : {task_id}")
-        print(f"Task Name : {task_name}")
 
         task = workflow_manager.get_task(task_id)
 
         if not task:
-            print("Task not found")
             return
-
-        # ------------------------
-        # Search vector memory FIRST
-        # ------------------------
-
+        if task.status == COMPLETED:
+            return
         retrieved_memories = self.search_memory(task_name)
-
-        print("\n===== Retrieved Memories =====")
-
-        for memory in retrieved_memories:
-            print(memory)
-
-        # Retry simulation
-
-        if "JWT" in task_name and task.retry_count < 2:
-
-            print(f"\n[{self.agent_name}] Simulating JWT Service Failure...")
-
-            failed_event = Event(
-                event_type=TASK_FAILED,
-                source_agent=self.agent_name,
-                correlation_id=event.correlation_id,
-                payload={
-                    "workflow_id": workflow_id,
-                    "task_id": task_id,
-                    "task_name": task_name,
-                },
-            )
-
-            await self.publish_event(failed_event)
-            return
 
         print(f"\n[{self.agent_name}] Executing Backend Capability...")
 
@@ -97,15 +56,11 @@ class DeveloperAgent(BaseAgent):
             memories=retrieved_memories,
         )
 
-        # Store memory AFTER execution
         self.store_memory(
             workflow_id=workflow_id,
             task_name=task_name,
             memory_data=result,
         )
-
-        print("\nDeveloper Memory")
-        print(self.get_recent_memory())
 
         completed_event = Event(
             event_type=TASK_COMPLETED,
@@ -119,5 +74,6 @@ class DeveloperAgent(BaseAgent):
                 "task_name": task_name,
             },
         )
+        print(f"DEVELOPER RECEIVED -> " f"{task_name} | {task_id}")
 
         await self.publish_event(completed_event)

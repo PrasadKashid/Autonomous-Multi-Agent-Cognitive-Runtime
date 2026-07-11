@@ -24,9 +24,6 @@ async def task_failed_handler(event: Event):
     if not task:
         return
 
-    print("\n===== TASK FAILED =====")
-    print("Task :", task.task_name)
-
     workflow_manager.increment_retry_count(task_id)
 
     print(f"Retry Count : {task.retry_count}/{task.max_retries}")
@@ -44,7 +41,6 @@ async def task_failed_handler(event: Event):
         dependency_outputs = workflow_manager.get_dependency_output(task)
         workflow = workflow_manager.get_workflow(workflow_id)
         workflow_context = workflow_manager.get_workflow_context(workflow_id)
-        print("Workflow Context", workflow_context)
         workflow_context = workflow_manager.get_workflow_context(
             workflow_id=workflow_id
         )
@@ -66,10 +62,6 @@ async def task_failed_handler(event: Event):
         await event_bus.publish(retry_event)
 
     else:
-
-        print("\n===== MAX RETRIES EXCEEDED =====")
-        print("Task :", task.task_name)
-        print("Workflow Failed")
         workflow_failed_event = Event(
             event_type=WORKFLOW_FAILED,
             source_agent="WORKFLOW_MANAGER",

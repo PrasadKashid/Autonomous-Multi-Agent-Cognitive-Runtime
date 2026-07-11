@@ -5,9 +5,10 @@ from app.orchestration.workflows.states import PENDING
 
 
 class WorkFlow:
-    def __init__(self, workflow_name: str, correlation_id: str):
+    def __init__(self, workflow_name: str, correlation_id: str, project_goal: str):
         self.workflow_id = str(uuid.uuid4())
         self.workflow_name = workflow_name
+        self.project_goal = project_goal or workflow_name
         self.correlation_id = correlation_id
         self.status = PENDING
         self.created_at = datetime.utcnow()

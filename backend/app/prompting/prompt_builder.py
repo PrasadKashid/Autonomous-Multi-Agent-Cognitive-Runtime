@@ -26,14 +26,27 @@ class PromptBuilder:
 
         template = self.PROMPTS[agent_name]
 
+        # NEW
+        project_goal = ""
+        workflow_name = ""
+
+        if workflow_context:
+            project_goal = workflow_context.get("project_goal", "")
+            workflow_name = workflow_context.get("workflow_name", "")
+
+            # Only send task information to the prompt
+            workflow_context = workflow_context.get("tasks", {})
+
         return template.format(
+            project_goal=project_goal,
+            workflow_name=workflow_name,
             task=task,
             dependencies=json.dumps(
                 dependencies or {},
                 indent=2,
             ),
             workflow_context=json.dumps(
-                workflow_context or {},
+                workflow_context,
                 indent=2,
             ),
             memories=json.dumps(

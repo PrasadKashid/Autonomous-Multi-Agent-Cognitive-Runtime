@@ -3,13 +3,18 @@ from app.orchestration.event_bus.event_types import (
     TASK_ASSIGNED,
     WORKFLOW_COMPLETED,
     WORKFLOW_FAILED,
+    WORKFLOW_CREATED,
 )
 
 from app.orchestration.workflows.workflow_manager import workflow_manager
 from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.bus import event_bus
-from app.orchestration.workflows.states import RUNNING, FAILED
-from app.db.repositories.workflow_context_repository import workflow_context_repository
+from app.orchestration.workflows.states import (
+    RUNNING,
+    FAILED,
+    COMPLETED,
+    PENDING,
+)
 
 
 async def task_completed_handler(event: Event):
@@ -21,14 +26,19 @@ async def task_completed_handler(event: Event):
     workflow_id = event.payload["workflow_id"]
     status = event.payload["status"]
 
-    # Update task status
+    task = workflow_manager.get_task(completed_task_id)
+
+    if task is None:
+        return
+
+    # Ignore duplicate completion events
+    if task.status == COMPLETED:
+        return
 
     workflow_manager.update_task_status(
         task_id=completed_task_id,
         status=status,
     )
-
-    # Save task output
 
     output = event.payload.get("result")
 
@@ -40,8 +50,6 @@ async def task_completed_handler(event: Event):
 
     task = workflow_manager.get_task(completed_task_id)
 
-    # Update workflow context
-
     workflow_manager.update_workflow_context(
         workflow_id=workflow_id,
         key=task.task_name,
@@ -51,98 +59,95 @@ async def task_completed_handler(event: Event):
         },
     )
 
-    print("\n===== WORKFLOW CONTEXT =====")
-    print(workflow_manager.get_workflow_context(workflow_id))
-
-    print("\n=== TASK COMPLETED ===")
-    print("Workflow ID :", workflow_id)
-    print("Task ID :", completed_task_id)
-    print("Task Name :", task.task_name)
-    print("Task Status :", task.status)
-
-    # Check workflow completion
-
-    workflow_completed = workflow_manager.check_workflow_completion(workflow_id)
-
-    print("Workflow Completed Flag =", workflow_completed)
-
-    if workflow_completed:
+    if workflow_manager.check_workflow_completion(workflow_id):
 
         workflow = workflow_manager.get_workflow(workflow_id)
 
-        print("\n===== WORKFLOW OUTPUTS =====")
-
-        for workflow_task_id in workflow.tasks:
-
-            workflow_task = workflow_manager.get_task(workflow_task_id)
-
-            print("\nTask :", workflow_task.task_name)
-            print("Output :", workflow_task.output)
-
-        workflow_completed_event = Event(
-            event_type=WORKFLOW_COMPLETED,
-            source_agent="WORKFLOW_MANAGER",
-            correlation_id=event.correlation_id,
-            payload={
-                "workflow_id": workflow.workflow_id,
-                "workflow_name": workflow.workflow_name,
-            },
+        await event_bus.publish(
+            Event(
+                event_type=WORKFLOW_COMPLETED,
+                source_agent="WORKFLOW_MANAGER",
+                correlation_id=event.correlation_id,
+                payload={
+                    "workflow_id": workflow.workflow_id,
+                    "workflow_name": workflow.workflow_name,
+                },
+            )
         )
-
-        await event_bus.publish(workflow_completed_event)
 
         return
 
-    # Find next runnable tasks
-
     runnable_tasks = workflow_manager.get_runnable_tasks(workflow_id)
 
-    for runnable_task in runnable_tasks:
+    for task in runnable_tasks:
 
-        print(f"\nRunnable Task : {runnable_task.task_name}")
+        current_task = workflow_manager.get_task(task.task_id)
+
+        if current_task is None:
+            continue
+
+        if current_task.status != PENDING:
+            continue
 
         workflow_manager.update_task_status(
-            task_id=runnable_task.task_id,
-            status=RUNNING,
+            current_task.task_id,
+            RUNNING,
         )
 
-        dependency_output = workflow_manager.get_dependency_output(runnable_task)
-        workflow = workflow_manager.get_workflow(workflow_id)
+        dependency_outputs = workflow_manager.get_dependency_output(current_task)
 
         workflow_context = workflow_manager.get_workflow_context(workflow_id)
 
-        assigned_event = Event(
-            event_type=TASK_ASSIGNED,
-            source_agent="WORKFLOW_MANAGER",
-            correlation_id=event.correlation_id,
-            payload={
-                "workflow_id": workflow_id,
-                "task_id": runnable_task.task_id,
-                "task_name": runnable_task.task_name,
-                "assigned_agent": runnable_task.assigned_agent,
-                "dependency_outputs": dependency_output,
-                "workflow_context": workflow_context,
-            },
+        await event_bus.publish(
+            Event(
+                event_type=TASK_ASSIGNED,
+                source_agent="WORKFLOW_MANAGER",
+                correlation_id=event.correlation_id,
+                payload={
+                    "workflow_id": workflow_id,
+                    "task_id": current_task.task_id,
+                    "task_name": current_task.task_name,
+                    "assigned_agent": current_task.assigned_agent,
+                    "dependency_outputs": dependency_outputs,
+                    "workflow_context": workflow_context,
+                },
+            )
         )
 
-        await event_bus.publish(assigned_event)
 
+async def workflow_created_handler(event: Event):
 
-async def workflow_failed_handler(event: Event):
-
-    if event.event_type != WORKFLOW_FAILED:
+    if event.event_type != WORKFLOW_CREATED:
         return
 
     workflow_id = event.payload["workflow_id"]
 
-    workflow = workflow_manager.get_workflow(workflow_id=workflow_id)
+    runnable_tasks = workflow_manager.get_runnable_tasks(workflow_id)
 
-    if not workflow:
-        return
+    for task in runnable_tasks:
 
-    workflow.status = FAILED
+        if task.status != PENDING:
+            continue
 
-    print("\n===== WORKFLOW FAILED =====")
-    print("Workflow ID :", workflow.workflow_id)
-    print("Workflow Name :", workflow.workflow_name)
-    print("Failed Task :", event.payload["task_name"])
+        workflow_manager.update_task_status(
+            task.task_id,
+            RUNNING,
+        )
+
+        workflow_context = workflow_manager.get_workflow_context(workflow_id)
+
+        await event_bus.publish(
+            Event(
+                event_type=TASK_ASSIGNED,
+                source_agent="WORKFLOW_MANAGER",
+                correlation_id=event.correlation_id,
+                payload={
+                    "workflow_id": workflow_id,
+                    "task_id": task.task_id,
+                    "task_name": task.task_name,
+                    "assigned_agent": task.assigned_agent,
+                    "workflow_context": workflow_context,
+                    "dependency_outputs": {},
+                },
+            )
+        )

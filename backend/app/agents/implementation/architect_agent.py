@@ -41,11 +41,6 @@ class ArchitectureAgent(BaseAgent):
         # Retrieve relevant memories BEFORE execution
         retrieved_memories = self.search_memory(task_name)
 
-        print("\n===== Retrieved Memories =====")
-
-        for memory in retrieved_memories:
-            print(memory)
-
         # Later this prompt goes to an LLM
         result = self.capability.execute(
             task_name=task_name,
@@ -59,10 +54,7 @@ class ArchitectureAgent(BaseAgent):
             task_name=task_name,
             memory_data=result,
         )
-
-        print("\n===== Architect Memory =====")
-        print(self.get_recent_memory())
-
+        
         completed_event = Event(
             event_type=TASK_COMPLETED,
             source_agent=self.agent_name,

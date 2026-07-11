@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Callable, Dict, List
 
 from app.orchestration.event_bus.base import Event
@@ -11,29 +11,53 @@ class EventBus:
 
         self.subscribers: Dict[str, List[Callable]] = defaultdict(list)
 
+        # FIFO event queue
+        self.queue = deque()
+
+        # Prevent recursive processing
+        self.processing = False
+
     def subscribe(self, event_type: str, handler: Callable):
 
         self.subscribers[event_type].append(handler)
 
     async def publish(self, event: Event):
 
-        workflow_id = event.payload.get("workflow_id")
+        # Add event to queue
+        self.queue.append(event)
 
-        if workflow_id:
-            workflow_event_repository.save(
-                workflow_id=workflow_id,
-                task_id=event.payload.get("task_id"),
-                task_name=event.payload.get("task_name"),
-                event_type=event.event_type,
-                agent=event.source_agent,
-                message=event.message
-                or f"{event.event_type} published by {event.source_agent}",
-            )
+        # If another publish() is already processing,
+        # just enqueue and return.
+        if self.processing:
+            return
 
-        handlers = self.subscribers.get(event.event_type, [])
+        self.processing = True
 
-        for handler in handlers:
-            await handler(event)
+        try:
+
+            while self.queue:
+
+                current_event = self.queue.popleft()
+
+                workflow_id = current_event.payload.get("workflow_id")
+
+                if workflow_id:
+                    workflow_event_repository.save(
+                        workflow_id=workflow_id,
+                        task_id=current_event.payload.get("task_id"),
+                        task_name=current_event.payload.get("task_name"),
+                        event_type=current_event.event_type,
+                        agent=current_event.source_agent,
+                        message=current_event.message
+                        or f"{current_event.event_type} published by {current_event.source_agent}",
+                    )
+
+                handlers = self.subscribers.get(current_event.event_type, [])
+
+                for handler in handlers:
+                    await handler(current_event)
+        finally:
+            self.processing = False
 
 
 event_bus = EventBus()

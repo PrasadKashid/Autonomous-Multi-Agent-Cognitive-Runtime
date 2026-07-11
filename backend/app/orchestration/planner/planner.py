@@ -1,11 +1,8 @@
-class PlannedTask:
+from dataclasses import dataclass, field
 
-    def __init__(
-        self,
-        task_name,
-        capability,
-        dependencies=None,
-    ):
-        self.task_name = task_name
-        self.capability = capability
-        self.dependencies = dependencies or []
+
+@dataclass
+class PlannedTask:
+    task_name: str
+    capability: str
+    dependencies: list[str] = field(default_factory=list)

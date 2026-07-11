@@ -4,6 +4,7 @@ from app.orchestration.event_bus.base import Event
 from app.orchestration.event_bus.event_types import (
     TASK_CREATED,
     TASK_ASSIGNED,
+    WORKFLOW_CREATED,
 )
 
 from app.orchestration.workflows.workflow_manager import workflow_manager
@@ -31,10 +32,6 @@ class PMAgent(BaseAgent):
             workflow_name=event.payload["task"],
             correlation_id=event.correlation_id,
         )
-
-        print("Workflow ID :", created_workflow.workflow_id)
-        print("Workflow Name :", created_workflow.workflow_name)
-        print("Workflow Status :", created_workflow.status)
 
         planned_tasks = task_planner.create_plan(event.payload["task"])
         task_mapping = {}
@@ -71,13 +68,6 @@ class PMAgent(BaseAgent):
                 task,
             )
 
-            print("\nTask Created")
-            print("Task ID :", task.task_id)
-            print("Task Name :", task.task_name)
-            print("Assigned Agent :", task.assigned_agent)
-            print("Task Status :", task.status)
-            print("Dependencies :", task.dependencies)
-
         print(f"\n[PM_Agent] Total Tasks Created : {len(tasks)}")
 
         self.store_memory(
@@ -92,30 +82,36 @@ class PMAgent(BaseAgent):
                 for t in tasks
             ],
         )
-        print("\nPM Memory")
-        print(self.get_recent_memory())
-        # Assign Only Tasks Without Dependencies
+        # for task in tasks:
 
-        for task in tasks:
+        #     if len(task.dependencies) > 0:
+        #         continue
 
-            if len(task.dependencies) > 0:
-                continue
+        #     workflow_context = workflow_manager.get_workflow_context(
+        #         created_workflow.workflow_id
+        #     )
 
-            workflow_context = workflow_manager.get_workflow_context(
-                created_workflow.workflow_id
-            )
+        #     assigned_event = Event(
+        #         event_type=TASK_ASSIGNED,
+        #         source_agent=self.agent_name,
+        #         correlation_id=event.correlation_id,
+        #         payload={
+        #             "workflow_id": created_workflow.workflow_id,
+        #             "task_id": task.task_id,
+        #             "task_name": task.task_name,
+        #             "assigned_agent": task.assigned_agent,
+        #             "workflow_context": workflow_context,
+        #         },
+        #     )
 
-            assigned_event = Event(
-                event_type=TASK_ASSIGNED,
-                source_agent=self.agent_name,
-                correlation_id=event.correlation_id,
-                payload={
-                    "workflow_id": created_workflow.workflow_id,
-                    "task_id": task.task_id,
-                    "task_name": task.task_name,
-                    "assigned_agent": task.assigned_agent,
-                    "workflow_context": workflow_context,
-                },
-            )
+        #     await self.publish_event(assigned_event)
+        workflow_created_event = Event(
+            event_type=WORKFLOW_CREATED,
+            source_agent=self.agent_name,
+            correlation_id=event.correlation_id,
+            payload={
+                "workflow_id": created_workflow.workflow_id,
+            },
+        )
 
-            await self.publish_event(assigned_event)
+        await self.publish_event(workflow_created_event)

@@ -25,12 +25,5 @@ class BaseCapability:
             memories=memories,
         )
 
-        print(f"\n===== GENERATED PROMPT ===== {self.agent_name}")
-        print(prompt)
-
         response = self.llm.generate(prompt)
-
-        print(f"\n===== LLM RESPONSE ===== {self.agent_name}")
-        print(response)
-
         return response_parser.parse(response)

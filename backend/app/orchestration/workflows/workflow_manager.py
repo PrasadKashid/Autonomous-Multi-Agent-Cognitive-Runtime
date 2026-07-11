@@ -28,6 +28,7 @@ class WorkflowManager:
         workflow = WorkFlow(
             workflow_name=workflow_name,
             correlation_id=correlation_id,
+            project_goal=workflow_name,
         )
 
         # Runtime Memory
@@ -168,10 +169,6 @@ class WorkflowManager:
             workflow.status = COMPLETED
             workflow_repository.update_status(workflow_id, COMPLETED)
 
-            print("\nWORKFLOW COMPLETED")
-            print("Workflow ID :", workflow.workflow_id)
-            print("Workflow Name :", workflow.workflow_name)
-
             return True
 
         return False
@@ -267,7 +264,11 @@ class WorkflowManager:
         if not workflow:
             return {}
 
-        context = {}
+        context = {
+            "project_goal": workflow.project_goal,
+            "workflow_name": workflow.workflow_name,
+            "tasks": {},
+        }
 
         for task_id in workflow.tasks:
 
@@ -276,7 +277,7 @@ class WorkflowManager:
             if not task:
                 continue
 
-            context[task.task_name] = {
+            context["tasks"][task.task_name] = {
                 "status": task.status,
                 "output": task.output,
             }
@@ -291,13 +292,10 @@ class WorkflowManager:
 
         workflows = workflow_repository.get_incomplete_workflows()
 
-        print("\n===== DB WORKFLOWS =====")
-
         for wf in workflows:
             print(f"{wf.workflow_id} {wf.status}")
 
         if not workflows:
-            print("No workflows to recover")
             return
 
         for db_workflow in workflows:
@@ -307,6 +305,7 @@ class WorkflowManager:
             runtime_workflow = WorkFlow(
                 workflow_name=db_workflow.workflow_name,
                 correlation_id=db_workflow.correlation_id,
+                project_goal=db_workflow.project_goal,
             )
 
             runtime_workflow.workflow_id = db_workflow.workflow_id
@@ -357,12 +356,6 @@ class WorkflowManager:
                 # Reset RUNNING Tasks
 
                 if runtime_task.status == RUNNING:
-
-                    print(
-                        f"Resetting RUNNING task "
-                        f"{runtime_task.task_name} -> PENDING"
-                    )
-
                     runtime_task.status = PENDING
 
                     task_repository.update_status(
@@ -389,62 +382,17 @@ class WorkflowManager:
 
                     runtime_task.output = None
 
-                # Dependency Validation
-
-                for dep in dependencies:
-
-                    if dep not in task_ids:
-
-                        print(
-                            f"WARNING: Missing dependency "
-                            f"{dep} for "
-                            f"{runtime_task.task_name}"
-                        )
-
                 # Store Runtime Task
 
                 self.tasks[runtime_task.task_id] = runtime_task
 
                 runtime_workflow.tasks.append(runtime_task.task_id)
 
-                print(
-                    f"Recovered Task: "
-                    f"{runtime_task.task_name} | "
-                    f"Status={runtime_task.status} | "
-                    f"Dependencies={runtime_task.dependencies}"
-                )
-
-            # Summary
-
-            print(
-                f"\nRecovered {len(tasks)} tasks "
-                f"for workflow "
-                f"{runtime_workflow.workflow_id}"
-            )
-
-            print(f"Workflow Status : " f"{runtime_workflow.status}")
-
-            print(f"Workflow Progress : " f"{runtime_workflow.progress}")
-
-            print("\n===== RECOVERED TASKS =====")
-
             for task_id in runtime_workflow.tasks:
 
                 task = self.get_task(task_id)
 
-                print(
-                    f"Task={task.task_name}, "
-                    f"Status={task.status}, "
-                    f"Dependencies={task.dependencies}"
-                )
-
             runnable_tasks = self.get_runnable_tasks(runtime_workflow.workflow_id)
-
-            print(f"Runnable Tasks Found : " f"{len(runnable_tasks)}")
-
-            for task in runnable_tasks:
-
-                print(f"Ready To Resume : " f"{task.task_name}")
 
     async def resume_recovered_workflows(self):
 
@@ -472,7 +420,6 @@ class WorkflowManager:
                         ),
                     },
                 )
-
                 await event_bus.publish(event)
 
 

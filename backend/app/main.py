@@ -20,7 +20,6 @@ router = APIRouter()
 
 @app.on_event("startup")
 async def startup_event():
-
     workflow_manager.recover_workflows()
     workflows = workflow_manager.get_all_workflows()
     await workflow_manager.resume_recovered_workflows()
